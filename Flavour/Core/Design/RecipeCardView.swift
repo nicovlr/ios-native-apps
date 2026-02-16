@@ -6,21 +6,18 @@ struct RecipeCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // image area
             Rectangle()
                 .fill(
                     LinearGradient(
                         colors: [colorForCuisine(recipe.cuisine), .gray.opacity(0.15)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                        startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
                 .frame(height: compact ? 100 : 160)
                 .overlay(alignment: .bottomLeading) {
                     Text(recipe.cuisine.uppercased())
                         .font(.caption2.bold())
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(.ultraThinMaterial, in: Capsule())
                         .padding(10)
                 }
@@ -29,14 +26,12 @@ struct RecipeCardView: View {
                 Text(recipe.title)
                     .font(compact ? .subheadline.bold() : .headline)
                     .lineLimit(2)
-
                 if !compact {
                     HStack(spacing: 12) {
                         Label("\(recipe.prepTime)m", systemImage: "clock")
                         Label(recipe.difficulty.rawValue, systemImage: "chart.bar")
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(.secondary)
                 }
             }
             .padding(compact ? 8 : 12)
@@ -44,6 +39,9 @@ struct RecipeCardView: View {
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerMedium))
         .shadow(color: Theme.cardShadow, radius: 4, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.title), \(recipe.cuisine), \(recipe.prepTime) minutes, \(recipe.difficulty.rawValue)")
+        .accessibilityHint("Double-tap to view recipe details")
     }
 
     private func colorForCuisine(_ cuisine: String) -> Color {
