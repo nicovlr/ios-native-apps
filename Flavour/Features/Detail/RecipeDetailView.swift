@@ -28,11 +28,11 @@ struct RecipeDetailView: View {
                         .foregroundStyle(isSaved ? .red : .secondary)
                         .symbolEffect(.bounce, value: showSavedFeedback)
                 }
+                .accessibilityLabel(isSaved ? "Remove from favorites" : "Add to favorites")
+                .accessibilityHint("Double-tap to \(isSaved ? "remove this recipe from" : "add this recipe to") your favorites")
             }
         }
-        .task {
-            checkIfSaved()
-        }
+        .task { checkIfSaved() }
     }
 
     private var headerSection: some View {
@@ -45,7 +45,6 @@ struct RecipeDetailView: View {
                         .font(.system(size: 50))
                         .foregroundStyle(.secondary)
                 }
-
             Text(recipe.cuisine)
                 .font(.caption.bold())
                 .padding(.horizontal, 10)
@@ -53,6 +52,8 @@ struct RecipeDetailView: View {
                 .background(.ultraThinMaterial, in: Capsule())
                 .padding(14)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.title), \(recipe.cuisine) cuisine")
     }
 
     private var infoBar: some View {
@@ -61,18 +62,16 @@ struct RecipeDetailView: View {
             InfoChip(icon: "chart.bar", text: recipe.difficulty.rawValue)
             InfoChip(icon: "list.bullet", text: "\(recipe.ingredients.count) ingredients")
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.prepTime) minutes, \(recipe.difficulty.rawValue) difficulty, \(recipe.ingredients.count) ingredients")
     }
 
     private var ingredientsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Ingredients")
-                .font(.title3.bold())
-
+            Text("Ingredients").font(.title3.bold())
             ForEach(recipe.ingredients, id: \.self) { ingredient in
                 HStack(spacing: 10) {
-                    Circle()
-                        .fill(Theme.accent)
-                        .frame(width: 6, height: 6)
+                    Circle().fill(Theme.accent).frame(width: 6, height: 6).accessibilityHidden(true)
                     Text(ingredient)
                 }
             }
@@ -81,17 +80,13 @@ struct RecipeDetailView: View {
 
     private var stepsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Steps")
-                .font(.title3.bold())
-
+            Text("Steps").font(.title3.bold())
             ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
                 HStack(alignment: .top, spacing: 12) {
                     Text("\(index + 1)")
-                        .font(.headline)
-                        .foregroundStyle(Theme.accent)
-                        .frame(width: 28)
-                    Text(step)
-                        .font(.body)
+                        .font(.headline).foregroundStyle(Theme.accent)
+                        .frame(width: 28).accessibilityLabel("Step \(index + 1)")
+                    Text(step).font(.body)
                 }
                 .padding(.vertical, 4)
             }
@@ -102,26 +97,22 @@ struct RecipeDetailView: View {
 
     private func checkIfSaved() {
         let id = recipe.id
-        let descriptor = FetchDescriptor<SavedRecipe>(
-            predicate: #Predicate { $0.recipeId == id }
-        )
+        let descriptor = FetchDescriptor<SavedRecipe>(predicate: #Predicate { $0.recipeId == id })
         isSaved = (try? modelContext.fetchCount(descriptor)) ?? 0 > 0
     }
 
     private func toggleSaved() {
         if isSaved {
-            // remove
             let id = recipe.id
-            let descriptor = FetchDescriptor<SavedRecipe>(
-                predicate: #Predicate { $0.recipeId == id }
-            )
+            let descriptor = FetchDescriptor<SavedRecipe>(predicate: #Predicate { $0.recipeId == id })
             if let existing = try? modelContext.fetch(descriptor).first {
                 modelContext.delete(existing)
             }
+            HapticManager.lightTap()
         } else {
-            // save
             let saved = SavedRecipe(from: recipe)
             modelContext.insert(saved)
+            HapticManager.success()
         }
         isSaved.toggle()
         showSavedFeedback.toggle()
@@ -131,17 +122,13 @@ struct RecipeDetailView: View {
 struct InfoChip: View {
     let icon: String
     let text: String
-
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.caption)
-            Text(text)
-                .font(.caption)
+            Image(systemName: icon).font(.caption)
+            Text(text).font(.caption)
         }
         .foregroundStyle(.secondary)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 10).padding(.vertical, 6)
         .background(.quaternary, in: Capsule())
     }
 }
